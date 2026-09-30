@@ -13,17 +13,18 @@ PHASES = [random.uniform(0, math.tau) for _ in range(3)]
 
 def sky_color(wave):
     """Return an (r, g, b) sky colour for the current wave, or None for the default."""
-    pass
+    progress = min(max(wave - 1, 0), 8)
+    return 5 + progress * 5, 5 + progress * 7, 20 + progress * 15
 
 
-def on_humanoid_rescued(humanoid):
-    """Called when the player catches a falling humanoid; add a bonus or celebration here."""
-    pass
+def on_humanoid_rescued(humanoid, player):
+    """Grant brief invulnerability when the player rescues a falling humanoid."""
+    player.invulnerable = max(player.invulnerable, 1.5)
 
 
 def bonus_life_threshold():
     """Return a score value at which the player earns an extra life, or None to disable bonus lives."""
-    pass
+    return 10000
 
 
 def wrap_delta(a, b):
@@ -168,7 +169,7 @@ class Game:
             elif humanoid.state == "falling" and abs(wrap_delta(player.x, humanoid.x)) < 24 and abs(humanoid.y - player.y) < 24:
                 humanoid.state, humanoid.y = "ground", ground_y(humanoid.x) - 8
                 self.score += 500
-                on_humanoid_rescued(humanoid)
+                on_humanoid_rescued(humanoid, player)
         self.update_bullets(dt)
         if player.invulnerable <= 0:
             for lander in self.landers:
@@ -203,7 +204,7 @@ class Game:
         blips += [(l.x, l.y, (255, 90, 90) if l.mutant else (230, 200, 60)) for l in self.landers]
         blips.append((self.player.x, self.player.y, (255, 255, 255)))
         for x, y, color in blips:
-            rx = self.screen_x(x) % VIEW_W
+            rx = (x % WORLD_W) / WORLD_W * VIEW_W
             ry = (y - PLAY_TOP) / (VIEW_H - PLAY_TOP) * (RADAR_H - 8) + 4
             pygame.draw.rect(screen, color, (rx - 2, ry - 2, 4, 4))
 
